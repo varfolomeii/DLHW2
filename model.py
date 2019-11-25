@@ -202,10 +202,10 @@ def test(G_A, G_B):
 
 
 if __name__ == '__main__':
-    G_A = G(3, 3)
-    G_B = G(3, 3)
-    D_A = D(3)
-    D_B = D(3)
+    G_A = G(3, 3).cuda()
+    G_B = G(3, 3).cuda()
+    D_A = D(3).cuda()
+    D_B = D(3).cuda()
     train(G_A, G_B, D_A, D_B, is_need_GAN=False)
     torch.save(G_A.state_dict(), model_save_name + 'G_A')
     torch.save(G_B.state_dict(), model_save_name + 'G_B')
