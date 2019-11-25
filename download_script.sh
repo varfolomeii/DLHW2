@@ -14,7 +14,7 @@ fi
 
 echo "Specified [$FILE]"
 
-URL=http://efrosgans.eecs.berkeley.edu/CycleGAN/datasets/$FILE.tar.gz
+URL=https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/$FILE.zip
 TAR_FILE=./datasets/$FILE.tar.gz
 TARGET_DIR=./datasets/$FILE/
 wget -N $URL -O $TAR_FILE
