@@ -12,6 +12,7 @@ train_root_path = ''
 test_root_path = ''
 model_save_name = 'models/'
 
+
 class ResNetBlock(nn.Module):
     def __init__(self, n_features):
         super(ResNetBlock, self).__init__()
@@ -31,8 +32,9 @@ class ResNetBlock(nn.Module):
     def forward(self, input):
         return input + self.layers(input)
 
+
 class G(nn.Module):
-    def __init__(self, in_channels, out_channels, n_resnet_blocks = 6, n_filters=64):
+    def __init__(self, in_channels, out_channels, n_resnet_blocks=6, n_filters=64):
         super(G, self).__init__()
         self.initial_layer = nn.Sequential(
             nn.ReflectionPad2d(2),
@@ -99,7 +101,7 @@ class D(nn.Module):
             nn.BatchNorm2d(512),
             nn.LeakyReLU(0.3),
         )
-        self.classifier = nn.Conv2d(512, 1,kernel_size=4, padding=1)
+        self.classifier = nn.Conv2d(512, 1, kernel_size=4, padding=1)
 
     def forward(self, input):
         output = self.input_conv(input)
@@ -129,14 +131,16 @@ class IDataset(Dataset):
     def __len__(self):
         return len(self.A)
 
-dataloader = DataLoader(IDataset(train_root_path), batch_size=64, num_workers=4)
+
+dataloader = DataLoader(IDataset(train_root_path, train_transforms), batch_size=64, num_workers=4)
+
 
 def train(G_A, G_B, D_A, D_B, epochs=20, is_need_GAN=True):
     GANLoss = nn.MSELoss().cuda()
     CycleLoss = nn.L1Loss().cuda()
-    optimizer_G = torch.optim.Adam(itertools.chain(G_A.params(), G_B.params()), lr=0.0002, betas=(0.5, 0.99))
-    optimizer_DA = torch.optim.Adam(D_A.params(), lr=0.0002, betas=(0.5, 0.99))
-    optimizer_DB = torch.optim.Adam(D_B.params(), lr=0.0002, betas=(0.5, 0.99))
+    optimizer_G = torch.optim.Adam(itertools.chain(G_A.parameters(), G_B.parameters()), lr=0.0002, betas=(0.5, 0.99))
+    optimizer_DA = torch.optim.Adam(D_A.parameters(), lr=0.0002, betas=(0.5, 0.99))
+    optimizer_DB = torch.optim.Adam(D_B.parameters(), lr=0.0002, betas=(0.5, 0.99))
     for epoch_num in range(epochs):
         loss_trace = []
         for i, batch in tqdm(enumerate(zip(dataloader_A, dataloader_B))):
@@ -199,6 +203,8 @@ test_transforms = transforms.Compose([
 ])
 
 test_dataloader = DataLoader(IDataset(test_root_path, test_transforms), batch_size=1, num_workers=4)
+
+
 def test(G_A, G_B):
     B_output = 'generated/B/'
     A_output = 'generated/A/'
