@@ -3,10 +3,10 @@ import os
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 import itertools
+from PIL import Image
 import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
 from tqdm import tqdm
-from torchvision.datasets import ImageFolder
 
 train_root_path = ''
 test_root_path = ''
@@ -31,7 +31,7 @@ class ResNetBlock(nn.Module):
     def forward(self, input):
         return input + self.layers(input)
 
-class G(nn.Module)
+class G(nn.Module):
     def __init__(self, in_channels, out_channels, n_resnet_blocks = 6, n_filters=64):
         super(G, self).__init__()
         self.initial_layer = nn.Sequential(
@@ -115,8 +115,22 @@ train_transforms = transforms.Compose([
 ])
 
 
-dataloader_A = DataLoader(ImageFolder(train_root_path + '/A', train_transforms), batch_size=64, num_workers=4)
-dataloader_B = DataLoader(ImageFolder(train_root_path + '/B', train_transforms), batch_size=64, num_workers=4)
+class IDataset(Dataset):
+    def __init__(self, root_path, t):
+        self.root_path = root_path
+
+        self.A = os.listdir(root_path + '/A')
+        self.B = os.listdir(root_path + '/B')
+        self.transforms = t
+
+    def __getitem__(self, index):
+        return self.transforms(Image.open(self.A[index])), self.transforms(Image.open(self.B[index]))
+
+    def __len__(self):
+        return len(self.A)
+
+dataloader = DataLoader(IDataset(train_root_path), batch_size=64, num_workers=4)
+
 def train(G_A, G_B, D_A, D_B, epochs=20, is_need_GAN=True):
     GANLoss = nn.MSELoss().cuda()
     CycleLoss = nn.L1Loss().cuda()
@@ -184,7 +198,7 @@ test_transforms = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-test_dataloader = DataLoader(ImageFolder(test_root_path, test_transforms), batch_size=1, num_workers=4)
+test_dataloader = DataLoader(IDataset(test_root_path, test_transforms), batch_size=1, num_workers=4)
 def test(G_A, G_B):
     B_output = 'generated/B/'
     A_output = 'generated/A/'
