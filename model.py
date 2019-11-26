@@ -7,9 +7,10 @@ from PIL import Image
 import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+import numpy as np
 
-train_root_path = ''
-test_root_path = ''
+train_root_path = 'datasets/horse2zebra'
+test_root_path = 'datasets/horse2zebra'
 model_save_name = 'models/'
 
 
@@ -111,6 +112,7 @@ class D(nn.Module):
 
 
 train_transforms = transforms.Compose([
+    transforms.Grayscale(3),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -121,18 +123,19 @@ class IDataset(Dataset):
     def __init__(self, root_path, t):
         self.root_path = root_path
 
-        self.A = os.listdir(root_path + '/A')
-        self.B = os.listdir(root_path + '/B')
+        self.A = os.listdir(root_path + '/trainA')
+        self.B = os.listdir(root_path + '/trainB')
         self.transforms = t
 
     def __getitem__(self, index):
-        return self.transforms(Image.open(self.A[index])), self.transforms(Image.open(self.B[index]))
+        return self.transforms(Image.open(self.root_path + '/trainA/' + self.A[index])), \
+               self.transforms(Image.open(self.root_path + '/trainB/' + self.B[index]))
 
     def __len__(self):
         return len(self.A)
 
 
-dataloader = DataLoader(IDataset(train_root_path, train_transforms), batch_size=64, num_workers=4)
+dataloader = DataLoader(IDataset(train_root_path, train_transforms), batch_size=32, num_workers=4)
 
 
 def train(G_A, G_B, D_A, D_B, epochs=20, is_need_GAN=True):
@@ -143,8 +146,10 @@ def train(G_A, G_B, D_A, D_B, epochs=20, is_need_GAN=True):
     optimizer_DB = torch.optim.Adam(D_B.parameters(), lr=0.0002, betas=(0.5, 0.99))
     for epoch_num in range(epochs):
         loss_trace = []
-        for i, batch in tqdm(enumerate(zip(dataloader_A, dataloader_B))):
+        for i, batch in tqdm(enumerate(dataloader)):
             A, B = batch
+            A = A.cuda()
+            B = B.cuda()
             optimizer_G.zero_grad()
             optimizer_DA.zero_grad()
             optimizer_DB.zero_grad()
@@ -202,7 +207,7 @@ test_transforms = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-test_dataloader = DataLoader(IDataset(test_root_path, test_transforms), batch_size=1, num_workers=4)
+#test_dataloader = DataLoader(IDataset(test_root_path, test_transforms), batch_size=1, num_workers=4)
 
 
 def test(G_A, G_B):
